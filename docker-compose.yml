@@ -1,0 +1,23 @@
+version: '2'
+services:
+
+  redis:
+    image: redis:4.0.5-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    hostname: redis
+
+  server:
+    build:
+      context: .
+    volumes:
+      - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+      - .:/lua/
+    environment:
+      - NODE_ENV=dev
+      - RHOST=redis
+    ports:
+      - 8081:8081
+    links:
+      - redis
+    depends_on:
+      - redis
