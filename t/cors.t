@@ -38,7 +38,9 @@ Access-Control-Allow-Origin: globo.com
 --- no_error_log
 [error]
 
-=== TEST 3: set given domain if redis failed
+
+
+=== TEST 2: set given domain if redis failed
 --- http_config eval: $::HttpConfig
 --- config
 location /t {
@@ -60,7 +62,9 @@ Access-Control-Allow-Origin: example.com
 --- error_log
 failed to connect to redis
 
-=== TEST 2: set given domain if allowed
+
+
+=== TEST 3: set given domain if allowed
 --- http_config eval: $::HttpConfig
 --- config
 location /t {
