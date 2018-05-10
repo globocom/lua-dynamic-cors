@@ -63,7 +63,7 @@ cors.set_header = function(host)
   -- with 10 seconds max idle time
   local ok, err = red:set_keepalive(10000, 100)
   if not ok then
-    ngx.say("failed to set keepalive: ", err)
+    ngx.log(ngx.ERR, "failed to set keepalive: ", err)
     return
   end
 end
