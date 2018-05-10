@@ -1,0 +1,13 @@
+FROM redis:4.0.5-alpine
+MAINTAINER Ján Koščo (@s7anley)
+
+RUN apk add --no-cache \
+        curl \
+        bash
+
+ADD sentinel-entrypoint.sh /
+RUN chmod +x /sentinel-entrypoint.sh
+
+EXPOSE 26379
+
+ENTRYPOINT ["/sentinel-entrypoint.sh"]

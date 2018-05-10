@@ -1,23 +1,58 @@
 version: '2'
 services:
 
-  redis:
-    image: redis:4.0.5-alpine
-    command: ["redis-server", "--appendonly", "yes"]
-    hostname: redis
-
-  server:
+  server: &server
     build:
       context: .
     volumes:
       - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
       - .:/lua/
-    environment:
-      - NODE_ENV=dev
-      - RHOST=redis
     ports:
-      - 8081:8081
+      - 8081:8080
     links:
-      - redis
+      - sentinel
+  test:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.test
+    volumes:
+      - .:/lua/
+      - ./t:/t
+    links:
+      - sentinel
+    command: bash -c "/lua/wait-for-it.sh -h 172.100.0.10 -p 26379 && prove /t && rm -rf /t/servroot"
+    working_dir: /lua/
+
+  redis_master:
+    image: redis:4.0.5-alpine
+    networks:
+      - default
+
+  redis_slave:
+    image: redis:4.0.5-alpine
+    networks:
+      - default
+
+  sentinel:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.sentinel
+    environment:
+        - MASTER_NAME=mymaster
+        - QUORUM=1
+        - MASTER=redis_master
+        - SLAVES=redis_slave
+    networks:
+      default:
+        ipv4_address: 172.100.0.10
     depends_on:
-      - redis
+        - redis_master
+        - redis_slave
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.100.0.0/24

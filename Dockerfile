@@ -1,4 +1,3 @@
 FROM openresty/openresty:alpine-fat
 
-RUN luarocks install luasocket
-RUN luarocks install redis-lua
+RUN luarocks install lua-resty-redis-connector
