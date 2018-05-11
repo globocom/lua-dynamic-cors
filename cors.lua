@@ -12,39 +12,58 @@ end
 
 local EXPIRES = 10
 
-local cors = {}
+local cors = { opts = {} }
+cors.init = function(opts)
+  if type(opts) ~= 'table' then
+    return nil, 'opts must be a table'
+  end
+
+  if type(opts.dict_name) ~= 'string' then
+    return nil, 'dict_name must be a string'
+  elseif not ngx.shared[opts.dict_name] then
+    return nil, 'no shared dict '..opts.dict_name
+  end
+
+  cors.cache = ngx.shared[opts.dict_name]
+
+  cors.opts['dict_name'] = opts.dict_name
+
+  if type(opts.redis) ~= 'table' then
+    return nil, 'redis opts must be a table'
+  end
+
+  cors.redis_opts = {
+    master_name = opts.redis.master_name,
+    password = opts.redis.password,
+    sentinels = {},
+  }
+
+  local hosts = split(opts.redis.hosts, ",")
+  for i, h in ipairs(hosts) do
+    cors.redis_opts['sentinels'][i] = { host = h, port = opts.redis.port }
+  end
+
+
+  cors.opts['default_domain'] = opts.default_domain
+end
 
 cors.set_header = function(host)
-  local cache = ngx.shared["cors_domains"]
-
-  local allowed_domain = cache:get(host)
+  local allowed_domain = cors.cache:get(host)
   if allowed_domain ~= nil then
     ngx.header["Access-Control-Allow-Origin"] = allowed_domain
     return
   end
 
-  local redis_password = ngx.var.redis_password
-  local redis_hosts = split(ngx.var.redis_hosts, ",")
-  local redis_master_name = ngx.var.redis_master_name
-
-  local red, err = rc.new({
-    master_name = redis_master_name,
-    role = "master"
-  }):connect{
-    sentinels = {
-        { host = redis_hosts[1], port = 26379 },
-    }
-  }
-
+  local red, err = rc.new(cors.redis_opts):connect()
   if not red then
     ngx.log(ngx.ERR, "failed to connect to redis: ", err)
     ngx.header["Access-Control-Allow-Origin"] = host
     return
   end
 
-  local allowed_domain = "globo.com" -- default domain
+  local allowed_domain = cors.opts.default_domain -- default domain
 
-  local is_member, err = red:sismember("domains", host)
+  local is_member, err = red:sismember(cors.opts.dict_name, host)
   if not is_member then
     ngx.log(ngx.ERR, "failed to check if " .. host.. "is allowed: ", err)
     ngx.header["Access-Control-Allow-Origin"] = host
@@ -55,7 +74,7 @@ cors.set_header = function(host)
     allowed_domain = host
   end
 
-  cache:set(host, allowed_domain, EXPIRES)
+  cors.cache:set(host, allowed_domain, EXPIRES)
 
   ngx.header["Access-Control-Allow-Origin"] = allowed_domain
 
@@ -67,6 +86,5 @@ cors.set_header = function(host)
     return
   end
 end
-
 
 return cors

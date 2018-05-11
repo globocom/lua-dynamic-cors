@@ -4,6 +4,7 @@ services:
   server: &server
     build:
       context: .
+    working_dir: /lua
     volumes:
       - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
       - .:/lua/

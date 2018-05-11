@@ -21,10 +21,23 @@ __DATA__
 --- config
 location /t {
     set $redis_hosts "172.100.0.10";
+    set $redis_port 26379;
+    set $redis_password "";
     set $redis_master_name "mymaster";
 
     content_by_lua_block {
       local cors = require 'cors'
+
+      cors.init({
+        dict_name = "cors_domains",
+        redis = {
+          master_name = ngx.var.redis_master_name,
+          password = ngx.var.redis_password,
+          hosts =  ngx.var.redis_hosts,
+          port = ngx.var.redis_port
+        },
+        default_domain = "globo.com"
+      })
 
       cors.set_header("example.com")
     }
@@ -46,9 +59,21 @@ Access-Control-Allow-Origin: globo.com
 location /t {
     set $redis_hosts "bla";
     set $redis_master_name "mymaster";
+    set $redis_port 26379;
 
     content_by_lua_block {
       local cors = require 'cors'
+
+      cors.init({
+        dict_name = "cors_domains",
+        redis = {
+          master_name = ngx.var.redis_master_name,
+          password = ngx.var.redis_password,
+          hosts =  ngx.var.redis_hosts,
+          port = ngx.var.redis_port
+        },
+        default_domain = "globo.com"
+      })
 
       cors.set_header("example.com")
     }
@@ -69,6 +94,7 @@ failed to connect to redis
 --- config
 location /t {
     set $redis_hosts "172.100.0.10";
+    set $redis_port 26379;
     set $redis_master_name "mymaster";
 
     content_by_lua_block {
@@ -79,10 +105,21 @@ location /t {
         }
       }
 
-      ok , err = red:sadd("domains", "neymar.com")
+      ok , err = red:sadd("cors_domains", "neymar.com")
       assert(ok ~= nil)
 
       local cors = require 'cors'
+
+      cors.init({
+        dict_name = "cors_domains",
+        redis = {
+          master_name = ngx.var.redis_master_name,
+          password = ngx.var.redis_password,
+          hosts =  ngx.var.redis_hosts,
+          port = ngx.var.redis_port
+        },
+        default_domain = "globo.com"
+      })
 
       cors.set_header("neymar.com")
     }
