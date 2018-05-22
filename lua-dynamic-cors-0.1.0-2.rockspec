@@ -1,8 +1,8 @@
 package = "lua-dynamic-cors"
-version = "0.1.0-1"
+version = "0.1.0-2"
 source = {
-   url = "https://github.com/globocom/lua-dynamic-cors/archive/v0.1.0.zip" -- We don't have one yet
-   dir = "lua-dynamic-cors"
+   url = "https://github.com/globocom/lua-dynamic-cors/archive/v0.1.0.zip",
+   dir = "lua-dynamic-cors-0.1.0"
 }
 description = {
    summary = "A dynamic way for setting the Access-Control-Allow-Origin header",
