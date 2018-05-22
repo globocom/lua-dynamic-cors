@@ -10,7 +10,7 @@ local split = function(s, delimiter)
 end
 
 
-local EXPIRES = 10
+local DEFAULT_TTL = 10 -- in seconds
 
 local cors = { opts = {} }
 cors.init = function(opts)
@@ -35,6 +35,7 @@ cors.init = function(opts)
   cors.redis_opts = {
     master_name = opts.redis.master_name,
     password = opts.redis.password,
+    connect_timeout = 1000,
     sentinels = {},
   }
 
@@ -43,7 +44,7 @@ cors.init = function(opts)
     cors.redis_opts['sentinels'][i] = { host = h, port = opts.redis.port }
   end
 
-
+  cors.opts['ttl'] = opts.ttl or DEFAULT_TTL
   cors.opts['default_domain'] = opts.default_domain
 end
 
@@ -74,7 +75,7 @@ cors.set_header = function(host)
     allowed_domain = host
   end
 
-  cors.cache:set(host, allowed_domain, EXPIRES)
+  cors.cache:set(host, allowed_domain, cors.opts.ttl)
 
   ngx.header["Access-Control-Allow-Origin"] = allowed_domain
 
