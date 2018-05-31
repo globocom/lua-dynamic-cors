@@ -1,0 +1,11 @@
+sudo: required
+
+language: generic
+
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: test
+      script: docker-compose run --rm test
